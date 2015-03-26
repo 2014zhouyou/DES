@@ -191,28 +191,3 @@ class DES:
         encrypted_data = choose(self.FINAL_REPLACEMENT_TABLE, combine_data)
 
         return encrypted_data
-
-def generateKey():
-    result = []
-    for i in range(0, 64):
-        result.append(random.randint(0, 1))
-    return result
-
-def generateData():
-    result = []
-    for i in range(0, 64):
-        result.append(random.randint(0, 1))
-    return result
-
-#test whether my des is correct
-def testFunction():
-    print("enter testFunction")
-    input_key = generateKey()
-    my_des = DES(input_key)
-    my_des.compute_key()
-    origin_data = generateData()
-    print(origin_data)
-    data = my_des.action('encrypt', origin_data)
-    new_data = my_des.action('decrypt', data)
-    print(exclusiveByBit(new_data, origin_data))
-    print("out testFunction")

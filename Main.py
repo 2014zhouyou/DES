@@ -32,6 +32,3 @@ def test():
     des_ecb_image('decrypt', my_des, 'encrypt1.bmp')
 
 
-test()
-
-

@@ -78,15 +78,6 @@ def turn_to_pixel_number(data):
             temp = ""
     return result
 
-#test format_data now to be correct
-def test():
-    data = read_picture("1.bmp")
-    data = format_data(data)
-    #print(len(data))
-    for i in range(0, len(data)):
-        #print("len of data[i] is" + str(len(data[i])))
-        print(data[i])
-
 
 
 
