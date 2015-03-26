@@ -1,5 +1,5 @@
 import PictureHelper
-import DES
+import des
 import random
 
 #use the ecb model to encrypt a picture and stored into stored_name
@@ -26,7 +26,7 @@ def generateKey():
 
 def test():
     input_key = generateKey()
-    my_des = DES.DES(input_key)
+    my_des = des.DES(input_key)
     my_des.compute_key()
     des_ecb_image('encrypt', my_des, "1.bmp")
     des_ecb_image('decrypt', my_des, 'encrypt1.bmp')
