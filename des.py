@@ -110,8 +110,6 @@ class DES:
     #compute the key use to encrypt and decrypt
     #stored result in a two dimentional array
     def compute_key(self):
-        print("Enter compute_key:")
-
         #step one:halve the key
         key_partA = choose(self.halve_key_tableA, self.origin_key)
         key_partB = choose(self.halve_key_tableB, self.origin_key)
@@ -131,7 +129,6 @@ class DES:
 
         self.des_decrypt_key = list(self.des_encrypt_key)
         self.des_decrypt_key.reverse()
-        print("End compute key")
 
     def action(self, type, data):
         #check the action decide to encrypt or decrypt
@@ -195,7 +192,6 @@ class DES:
 
         return encrypted_data
 
-
 def generateKey():
     result = []
     for i in range(0, 64):
@@ -220,5 +216,3 @@ def testFunction():
     new_data = my_des.action('decrypt', data)
     print(exclusiveByBit(new_data, origin_data))
     print("out testFunction")
-
-testFunction()
