@@ -1,8 +1,8 @@
 import PictureHelper
-import des
+import DESProcessor
 import random
 
-#use the ecb model to encrypt a picture and stored into stored_name
+#use the ecb model to encrypt a picture
 def des_ecb_image(type, des, image_name):
     #read and format data
     data = PictureHelper.read_picture(image_name)
@@ -14,8 +14,37 @@ def des_ecb_image(type, des, image_name):
         result.append(des.action(type, data[i]))
     result.append(data[-1])
 
-    #stored result
-    PictureHelper.reshape(result, type + image_name)
+    #reshape an image
+    PictureHelper.reshape(result, 'ecb' + type + image_name)
+
+#use the cbc mode to encrypt a picture
+def des_cbc_image(type, des, image_name):
+    #read and format data
+    data = PictureHelper.read_picture(image_name)
+    data = PictureHelper.format_data(data)
+
+    #begin process
+    vector = [0] * 64
+    result = []
+    if type == 'encrypt':
+        for i in range(0, len(data) - 1):
+            data[i] = DESProcessor.exclusiveByBit(data[i], vector)
+            vector = des.action(type, data[i])
+            result.append(vector)
+        result.append(data[-1])
+    elif type == 'decrypt':
+        for i in range(0, len(data) - 1):
+            temp = data[i]
+            data[i] = des.action(type, data[i])
+            data[i] = DESProcessor.exclusiveByBit(data[i], vector)
+            result.append(data[i])
+            vector = temp
+        result.append(data[-1])
+    else:
+        print("The cbc action type is invalid")
+
+    #reshape an image
+    PictureHelper.reshape(result, 'cbc' + type + image_name)
 
 #the following two function for test
 def generateKey():
@@ -26,9 +55,10 @@ def generateKey():
 
 def test():
     input_key = generateKey()
-    my_des = des.DES(input_key)
+    my_des = DESProcessor.DES(input_key)
     my_des.compute_key()
-    des_ecb_image('encrypt', my_des, "1.bmp")
-    des_ecb_image('decrypt', my_des, 'encrypt1.bmp')
+    des_cbc_image('encrypt', my_des, "1.bmp")
+    des_cbc_image('decrypt', my_des, 'cbcencrypt1.bmp')
 
 
+test()
