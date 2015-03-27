@@ -191,3 +191,70 @@ class DES:
         encrypted_data = choose(self.FINAL_REPLACEMENT_TABLE, combine_data)
 
         return encrypted_data
+
+    def actionForStatistic(self, type, data):
+        data_for_round = []
+        #check the action decide to encrypt or decrypt
+        if type == self.ENCRYPT:
+            key = list(self.des_encrypt_key)
+        elif type == self.DECRYPT:
+            key = list(self.des_decrypt_key)
+        else:
+            print("Action type not valid")
+
+        #print("len(key)=" + str(len(key)))
+        #step one:first we assume the data to be a length of 64bit 0 or 1
+
+         #step two :initial replacement
+        new_data = choose(self.INITIAL_REPLACEMENT_TABLE, data)
+        left_data = new_data[:32]
+        right_data = new_data[32:]
+
+        #iterate des
+        for round_number in range(0, 16):
+            temp_data = left_data
+            left_data = list(right_data)
+            #step three:extend right_data
+            #right data to be a length of 48, divide into eight number of 6 bit
+            right_data = choose(self.EXTEND_TABLE, right_data)
+            right_data = exclusiveByBit(right_data, key[round_number])
+
+            #step four:compress right_data
+            #先把列表按照6位划分成8组
+            data_group = []
+            for i in range(0, 8):
+                data_group.append(right_data[6*i:6*(i+1)])
+
+            data_group_number = []
+            #把8个列表的值转变成8个数字
+            for i in range(0, 8):
+                temp = ""
+                for j in range(0, 6):
+                    temp += str(data_group[i][j])
+                data_group_number.append(int(temp, 2))
+
+            right_data = []
+            for i in range(0, 8):
+                #根据数据表压缩转换成二进制
+                temp_number_string = '{0:04b}'.format(self.COMPRESS_TABLE[i][data_group_number[i]])
+                for j in temp_number_string:
+                    right_data.append(int(j))
+
+            #step five:换位置换
+            right_data = choose(self.DATA_REPLACEMENT_TABLE, right_data)
+
+            #step six:交换数据
+            right_data = exclusiveByBit(right_data, temp_data)
+
+            data_for_round.append(left_data + right_data)
+
+        #step seven:final process
+        #transpose left and right:
+        temp = left_data
+        left_data = right_data
+        right_data = temp
+        combine_data = left_data + right_data
+        data_for_round[-1] = combine_data
+
+        return data_for_round
+
