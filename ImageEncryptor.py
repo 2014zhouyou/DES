@@ -66,19 +66,19 @@ def getKey():
 def combine():
     print("Image encryptor start:")
     key = getKey()
-    my_des = DESProcessor.DES(key)
+    my_des = DESProcessor.DES(key, 'default')
     my_des.compute_key()
     while True:
         command = input("Please input you command(0 for ecb mode, 1 for cbc mode, else exit):")
         command = int(command)
         if command == 0:
             print("execute ecb mode encrypt...")
-            des_ecb_image('encrypt', my_des, "3.bmp")
-            des_ecb_image('decrypt', my_des, 'ecbencrypt3.bmp')
+            des_ecb_image('encrypt', my_des, "1.bmp")
+            des_ecb_image('decrypt', my_des, 'ecbencrypt1.bmp')
         elif command == 1:
             print("execute cbc mode encrypt...")
-            des_cbc_image('encrypt', my_des, "3.bmp")
-            des_cbc_image('decrypt', my_des, 'cbcencrypt3.bmp')
+            des_cbc_image('encrypt', my_des, "1.bmp")
+            des_cbc_image('decrypt', my_des, 'cbcencrypt1.bmp')
         else:
             print("Exit encryptor !")
             break

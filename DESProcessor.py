@@ -26,7 +26,7 @@ def exclusiveByBit(source1, source2):
 
 #the main part of DES algorithm
 class DES:
-    def __init__(self, input_key):
+    def __init__(self, input_key, s_box):
         #initial some data, data is correct
         self.origin_key = input_key#origin key to be length of 64, 0 or 1
         self.des_encrypt_key = []
@@ -46,14 +46,14 @@ class DES:
                                 41, 52, 31, 37, 47, 55, 30, 40,
                                 51, 45, 33, 48, 44, 49, 39, 56,
                                 34, 53, 46, 42, 50, 36, 29, 32] #len of 48, key的选择表
-        self.INITIAL_REPLACEMENT_TABLE = [58, 50, 42, 34, 26, 18, 10, 2,
-                                          60, 52, 44, 36, 28, 20, 12, 4,
-                                          62, 54, 46, 38, 30, 22, 14, 6,
-                                          64, 56, 48, 40, 32, 24, 16, 8,
-                                          57, 49, 41, 33, 25, 17, 9, 1,
-                                          59, 51, 43, 35, 27, 19, 11, 3,
-                                          61, 53, 45, 37, 29, 21, 13, 5,
-                                          63, 55, 47, 39, 31, 23, 15, 7]#数据的初始置换表len of 64
+        self.IP_TABLE = [58, 50, 42, 34, 26, 18, 10, 2,
+                          60, 52, 44, 36, 28, 20, 12, 4,
+                          62, 54, 46, 38, 30, 22, 14, 6,
+                          64, 56, 48, 40, 32, 24, 16, 8,
+                          57, 49, 41, 33, 25, 17, 9, 1,
+                          59, 51, 43, 35, 27, 19, 11, 3,
+                          61, 53, 45, 37, 29, 21, 13, 5,
+                          63, 55, 47, 39, 31, 23, 15, 7]#数据的初始置换表len of 64
         self.ENCRYPT = 'encrypt'
         self.DECRYPT = 'decrypt'
         self.EXTEND_TABLE = [32, 1, 2, 3, 4, 5, 4, 5,
@@ -62,7 +62,8 @@ class DES:
                              16, 17, 18, 19, 20, 21, 20, 21,
                              22, 23, 24, 25, 24, 25, 26, 27,
                              28, 29, 28, 29, 30, 31, 32, 1]#len of 48，数据的拓展置换表
-        self.COMPRESS_TABLE = [[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7,
+        if s_box == 'default':
+            self.COMPRESS_TABLE = [[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7,
                                 0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8,
                                 4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0,
                                 15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13],
@@ -94,11 +95,13 @@ class DES:
                                 1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2,
                                 7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8,
                                 2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]]
+        else:
+            self.COMPRESS_TABLE = s_box
         self.DATA_REPLACEMENT_TABLE = [16, 7, 20, 21, 29, 12, 28, 17,
                                      1, 15, 23, 26, 5, 18, 31, 10,
                                      2, 8, 24, 14, 32, 27, 3, 9,
                                      19, 13, 30, 6, 22, 11, 4, 25]
-        self.FINAL_REPLACEMENT_TABLE = [40, 8, 48, 16, 56, 24, 64, 32,
+        self.IP_REVERSE_TABLE = [40, 8, 48, 16, 56, 24, 64, 32,
                                   39, 7, 47, 15, 55, 23, 63, 31,
                                   38, 6, 46, 14, 54, 22, 62, 30,
                                   37, 5, 45, 13, 53, 21, 61, 29,
@@ -142,7 +145,7 @@ class DES:
         #step one:first we assume the data to be a length of 64bit 0 or 1
 
          #step two :initial replacement
-        new_data = choose(self.INITIAL_REPLACEMENT_TABLE, data)
+        new_data = choose(self.IP_TABLE, data)
         left_data = new_data[:32]
         right_data = new_data[32:]
 
@@ -162,12 +165,14 @@ class DES:
                 data_group.append(right_data[6*i:6*(i+1)])
 
             data_group_number = []
-            #把8个列表的值转变成8个数字
+            #把8个列表的值转变成8个数字对应于压缩表的位置
             for i in range(0, 8):
                 temp = ""
                 for j in range(0, 6):
                     temp += str(data_group[i][j])
-                data_group_number.append(int(temp, 2))
+                temp1 = int(temp[0] + temp[-1], 2)
+                temp2 = int(temp[1:-1], 2)
+                data_group_number.append(temp1 * 16 + temp2)
 
             right_data = []
             for i in range(0, 8):
@@ -188,7 +193,7 @@ class DES:
         left_data = right_data
         right_data = temp
         combine_data = left_data + right_data
-        encrypted_data = choose(self.FINAL_REPLACEMENT_TABLE, combine_data)
+        encrypted_data = choose(self.IP_REVERSE_TABLE, combine_data)
 
         return encrypted_data
 
@@ -206,7 +211,7 @@ class DES:
         #step one:first we assume the data to be a length of 64bit 0 or 1
 
          #step two :initial replacement
-        new_data = choose(self.INITIAL_REPLACEMENT_TABLE, data)
+        new_data = choose(self.IP_TABLE, data)
         left_data = new_data[:32]
         right_data = new_data[32:]
 
@@ -231,7 +236,9 @@ class DES:
                 temp = ""
                 for j in range(0, 6):
                     temp += str(data_group[i][j])
-                data_group_number.append(int(temp, 2))
+                temp1 = int(temp[0] + temp[-1], 2)
+                temp2 = int(temp[1:-1], 2)
+                data_group_number.append(temp1 * 16 + temp2)
 
             right_data = []
             for i in range(0, 8):
@@ -257,4 +264,7 @@ class DES:
         data_for_round[-1] = combine_data
 
         return data_for_round
+
+    def get_s_box(self):
+        return self.COMPRESS_TABLE
 
