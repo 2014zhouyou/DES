@@ -1,9 +1,8 @@
 import DESProcessor
-import os
-import pickle
 import random
 from ImageEncryptor import getKey
 import SBoxGenerator
+import  xlsxwriter
 
 #find the different number between two text and return the different number
 def countDifference(source1, source2):
@@ -15,28 +14,32 @@ def countDifference(source1, source2):
 
 #分析des的雪崩性质
 def analyzeSnowSlide(des):
-    print("Analyze the snow slide start:")
+    #print("Analyze the snow slide start:")
     source1 = [0] * 64
     source2 = [1] + [0] * 63
 
     data_for_round_source1 = des.actionForStatistic('encrypt', source1)
     data_for_round_source2 = des.actionForStatistic('encrypt', source2)
 
+    snow_slide_result = []
     for i in range(0, 16):
-        print("The differenc in the round " + str(i) + ":" +
-              str(countDifference(data_for_round_source1[i],data_for_round_source2[i])))
-    print("Analyze the snow slide end")
+        #print("The differenc in the round " + str(i) + ":" +
+        #     str(countDifference(data_for_round_source1[i],data_for_round_source2[i])))
+        snow_slide_result.append(countDifference(data_for_round_source1[i], data_for_round_source2[i]))
+    return snow_slide_result
+    #print("Analyze the snow slide end")
 
 #分析des的完整性
 def analyzeIntegrity(des):
-    print("Analyze the integrity start")
+    #print("Analyze the integrity start")
     data_sets = constructDataSets(2**8)
     frequency_of_data_sets = []
     for i in range(0, len(data_sets)):
         result_data_sets_i = des.action('encrypt', data_sets[i])
         frequency_of_data_sets.append(countFrequency(result_data_sets_i))
-    print(frequency_of_data_sets)
-    print("Analyze the integrity end")
+    #print(frequency_of_data_sets)
+    return frequency_of_data_sets
+    #print("Analyze the integrity end")
 
 #get the difference table and return in list of list
 def getDifferenceTable(one_s_box):
@@ -102,6 +105,8 @@ def findMax(difference_table):
     cols = len(difference_table[0])
     max_pos = (0, 0)
     result = [max_pos]
+
+    #求最大值屏蔽左上角的值
     difference_table[0][0] = 0
     for i in range(0, rows):
         for j in range(0, cols):
@@ -116,6 +121,9 @@ def findMax(difference_table):
                 for i in range(0, temp_length):
                     result.pop()
                 result.append(max_pos)
+
+    #恢复左上角的值
+    difference_table[0][0] = 64
     return result
 
 #construct data_sets
@@ -141,38 +149,69 @@ def countFrequency(data):
     return (frequency_of_0, 1 - frequency_of_0 )
 
 #analyze
-def analyze(s_box):
+def analyze(s_box, type):
     key = getKey()
     my_des = DESProcessor.DES(key, s_box)
     my_des.compute_key()
-    analyzeSnowSlide(my_des)
-    analyzeIntegrity(my_des)
+    snow_slide = analyzeSnowSlide(my_des)
+    integrity = analyzeIntegrity(my_des)
     table = getDifferenceTable(my_des.get_s_box()[0])
-    print(table)
-    print(findMax(table))
+    #print(table)
+    max_in_table = findMax(table)
+    writeToSheet(type, snow_slide, integrity, table, max_in_table)
+    #print(findMax(table))
+
+#helper function generate a xlsx file to store the analyse result
+def writeToSheet(type, snow_slide, integrity, table, max_in_table):
+    workbook = xlsxwriter.Workbook(type + ".xlsx")
+    worksheet = workbook.add_worksheet()
+    worksheet.write(0, 0, 'result of ' + type)
+
+    worksheet.write(3, 0, 'Snow slide result:')
+    for i in range(0, 16):
+        worksheet.write(4, i, "Round" + str(i))
+        worksheet.write(5, i, str(snow_slide[i]))
+
+    worksheet.write(8, 0, 'Integrity result:')
+    for i in range(0, 2**8):
+        worksheet.write(9, i, str(i))
+        worksheet.write(10, i, str(integrity[i]))
+
+    worksheet.write(13, 0, "Difference table")
+    for i in range(0, 16):
+        worksheet.write(13 + 1, i + 1, str(i))
+    for i in range(0, 64):
+        worksheet.write(13 + 2 + i, 0, str(i))
+    for i in range(0, 64):
+        for j in range(0, 16):
+            worksheet.write(14 + i + 1, j + 1, table[i][j])
+
+    worksheet.write(81, 0, "The max in difference table:")
+    for i in range(0, len(max_in_table)):
+        worksheet.write(81 + i + 1, 0, str(max_in_table[i]))
 
 #function for test
 def combine():
     print("Analyze process start...")
 
     #using default s_box
-    print("Enalyze using default S box")
-    analyze('default')
+    print("Enalyze using default S box...")
+    analyze('default', 'default_s_box')
 
     #using linear s_box
-    print("Enalyze using linear s box")
+    print("Enalyze using linear S box...")
     linear_s_box = SBoxGenerator.getLinearSBox()
-    analyze(linear_s_box)
+    analyze(linear_s_box, 'linear_s_box')
 
     #using random s_box
-    print("Enalyze using random s box")
+    print("Enalyze using random S box...")
     random_s_box = SBoxGenerator.getRandomSBox()
-    analyze(random_s_box)
+    analyze(random_s_box, 'random_s_box ')
 
     #using user defined s_box
-    print("Enalyze using user defined s box")
+    print("Enalyze using user defined S box...")
     user_defined_s_box = SBoxGenerator.getUserDefinedSBox()
-    analyze(user_defined_s_box)
+    analyze(user_defined_s_box, 'user_defined_s_box')
 
     print("Process End!")
 
