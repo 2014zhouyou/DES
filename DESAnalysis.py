@@ -95,6 +95,29 @@ def countSpecificInput(specific_input, one_s_box):
         result[int(temp, 2)] += 1
     return result
 
+
+#get the max case in the difference table
+def findMax(difference_table):
+    rows = len(difference_table)
+    cols = len(difference_table[0])
+    max_pos = (0, 0)
+    result = [max_pos]
+    difference_table[0][0] = 0
+    for i in range(0, rows):
+        for j in range(0, cols):
+            if difference_table[max_pos[0]][max_pos[1]] > difference_table[i][j] :
+                continue
+            elif difference_table[max_pos[0]][max_pos[1]] == difference_table[i][j]:
+                if not(max_pos[0] == i and max_pos[1] == j):
+                    result.append((i, j))
+            else:
+                max_pos = (i, j)
+                temp_length = len(result)
+                for i in range(0, temp_length):
+                    result.pop()
+                result.append(max_pos)
+    return result
+
 #construct data_sets
 def constructDataSets(data_set_length):
     data_set = []
@@ -124,7 +147,9 @@ def analyze(s_box):
     my_des.compute_key()
     analyzeSnowSlide(my_des)
     analyzeIntegrity(my_des)
-    print(getDifferenceTable(my_des.get_s_box()[0]))
+    table = getDifferenceTable(my_des.get_s_box()[0])
+    print(table)
+    print(findMax(table))
 
 #function for test
 def combine():
@@ -143,6 +168,11 @@ def combine():
     print("Enalyze using random s box")
     random_s_box = SBoxGenerator.getRandomSBox()
     analyze(random_s_box)
+
+    #using user defined s_box
+    print("Enalyze using user defined s box")
+    user_defined_s_box = SBoxGenerator.getUserDefinedSBox()
+    analyze(user_defined_s_box)
 
     print("Process End!")
 
